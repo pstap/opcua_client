@@ -1,0 +1,19 @@
+{application, opcua_client,
+ [{description, "An OTP application"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, {opcua_client_app, []}},
+  {applications,
+   [kernel,
+    stdlib
+   ]},
+  {env,[]},
+  {modules, [
+             ua_client,
+             ua_client_sock,
+             ua_conn_proto
+            ]},
+
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.
