@@ -24,35 +24,6 @@
 -define(INT, signed-little).
 -define(FLOAT, float-little).
 
-
-is_primitive(<<"Boolean">>) -> true;
-is_primitive(<<"SByte">>) -> true;
-is_primitive(<<"Byte">>) -> true;
-is_primitive(<<"UInt16">>) -> true;
-is_primitive(<<"Int16">>) -> true;
-is_primitive(<<"UInt32">>) -> true;
-is_primitive(<<"Int32">>) -> true;
-is_primitive(<<"UInt64">>) -> true;
-is_primitive(<<"Int64">>) -> true;
-is_primitive(<<"Float">>) -> true;
-is_primitive(<<"Double">>) -> true;
-is_primitive(<<"String">>) -> true;
-is_primitive(<<"DateTime">>) -> true;
-is_primitive(<<"GUID">>) -> true;
-is_primitive(<<"ByteString">>) -> true;
-is_primitive(<<"XmlElement">>) -> true;
-is_primitive(<<"NodeId">>) -> true;
-is_primitive(<<"ExpandedNodeId">>) -> true;
-is_primitive(<<"StatusCode">>) -> true;
-is_primitive(<<"QualifiedName">>) -> true;
-is_primitive(<<"LocalizedText">>) -> true;
-is_primitive(<<"ExtensionObject">>) -> true;
-is_primitive(<<"DataValue">>) -> true;
-is_primitive(<<"Variant">>) -> true;
-is_primitive(<<"DiagnosticInfo">>) -> true;
-is_primitive(_) -> false.     
-
-
 -spec encode_field(Type :: binary(), F :: term()) -> binary().
 encode_field(<<"Boolean">>, true) -> <<1>>;
 encode_field(<<"Boolean">>, false) -> <<0>>;
@@ -87,7 +58,7 @@ encode_field(<<"DateTime">>, _F) ->
     <<0:64/unsigned-little>>;
 encode_field(<<"GUID">>, _F) ->
     %% TODO
-    <<0:16/binary>>;
+    <<0>>;
 encode_field(<<"ByteString">>, F) ->
     L = byte_size(F),
     <<L:32/?INT,F/binary>>;
@@ -124,8 +95,10 @@ encode_field(<<"DiagnosticInfo">>, _F) ->
 
 %%-record(field_definition, {class :: binary(), fields :: list(tuple(binary(), binary()))}).
 
+
+%% TODO this should be replaced with an ETS table. {type, definition) type :: {ua_prim, ua_struct, ua_enum}
 get_field_def(<<"OpenSecureChannelRequest">>) ->    
-    {<<"structure">>, 
+    {ua_struct, 
      [{<<"RequestHeader">>, <<"RequestHeader">>},
       {<<"ClientProtocolVersion">>, <<"UInt32">>},
       {<<"RequestType">>, <<"SecurityTokenRequestType">>},
@@ -133,7 +106,7 @@ get_field_def(<<"OpenSecureChannelRequest">>) ->
       {<<"ClientNonce">>, <<"ByteString">>},
       {<<"RequestedLifetime">>, <<"UInt32">>}]};
 get_field_def(<<"RequestHeader">>) ->
-    {<<"structure">>, 
+    {ua_struct, 
      [{<<"AuthenticationToken">>, <<"NodeId">>},
       {<<"Timestamp">>,<<"DateTime">>},
       {<<"RequestHandle">>,<<"UInt32">>},
@@ -142,32 +115,70 @@ get_field_def(<<"RequestHeader">>) ->
       {<<"TimeoutHint">>,<<"UInt32">>},
       {<<"AdditionalHeader">>,<<"ExtensionObject">>}]};
 get_field_def(<<"SecurityTokenRequestType">>) ->
-    {<<"enumeration">>,
+    {ua_enum,
      [{<<"Issue">>, 0},
-      {<<"Renew">>, 1}]}.
+      {<<"Renew">>, 1}]};
+get_field_def(<<"MessageSecurityMode">>) ->
+    {ua_enum,
+     [{<<"Blah">>, 0},
+      {<<"Blah1">>, 1},
+      {<<"Blah2">>, 2},
+      {<<"Blah3">>, 0}]};
+get_field_def(<<"Boolean">>) -> ua_prim;
+get_field_def(<<"SByte">>) -> ua_prim;
+get_field_def(<<"Byte">>) -> ua_prim;
+get_field_def(<<"UInt16">>) -> ua_prim;
+get_field_def(<<"Int16">>) -> ua_prim;
+get_field_def(<<"UInt32">>) -> ua_prim;
+get_field_def(<<"Int32">>) -> ua_prim;
+get_field_def(<<"UInt64">>) -> ua_prim;
+get_field_def(<<"Int64">>) -> ua_prim;
+get_field_def(<<"Float">>) -> ua_prim;
+get_field_def(<<"Double">>) -> ua_prim;
+get_field_def(<<"String">>) -> ua_prim;
+get_field_def(<<"DateTime">>) -> ua_prim;
+get_field_def(<<"GUID">>) -> ua_prim;
+get_field_def(<<"ByteString">>) -> ua_prim;
+get_field_def(<<"XmlElement">>) -> ua_prim;
+get_field_def(<<"NodeId">>) -> ua_prim;
+get_field_def(<<"ExpandedNodeId">>) -> ua_prim;
+get_field_def(<<"StatusCode">>) -> ua_prim;
+get_field_def(<<"QualifiedName">>) -> ua_prim;
+get_field_def(<<"LocalizedText">>) -> ua_prim;
+get_field_def(<<"ExtensionObject">>) -> ua_prim;
+get_field_def(<<"DataValue">>) -> ua_prim;
+get_field_def(<<"Variant">>) -> ua_prim;
+get_field_def(<<"DiagnosticInfo">>) -> ua_prim;
+get_field_def(_) -> false.     
+
+
 
 
 encode_obj(Obj = #{<<"type">> := Type}) ->
-    case is_primitive(Type) of
-	true -> encode_field(Type, Obj);
-	false -> 
-	    Def = get_field_def(Type),
-	    encode_obj(Obj, Def, <<>>)
+    encode_obj(Obj, Type).
+encode_obj(Obj, Type) ->
+    case get_field_def(Type) of
+	ua_prim -> encode_field(Type, Obj);
+	{Class, Def} -> encode_obj(Obj, Class, Def, <<>>);
+	false -> io:format("Unknown type ~p~n", [Type]),
+		 exit(unknown_type)
     end.
-
-encode_obj(_Obj, [], Acc) -> Acc;
-encode_obj(Obj = #{<<"fields">> := ObjFields}, [{FieldName,FieldType}|RestFields], Acc) ->
+encode_obj(Obj, ua_enum, Def, _Acc) when is_binary(Obj) ->
+    %% lookup the value
+    case lists:keysearch(Obj, 1, Def) of
+	false -> exit("unknown enumeration value");
+	{value, {Obj, NumericID}} -> <<NumericID:32/?INT>>
+    end;
+encode_obj(Obj, ua_enum, _Def, _Acc) when is_number(Obj) ->
+    <<Obj:32/?INT>>;
+encode_obj(_Obj, _Class, [], Acc) -> Acc;
+encode_obj(Obj = #{<<"fields">> := ObjFields}, 
+	   ua_struct,
+	   [{FieldName, FieldType}|RestFields], Acc) ->
     Field = maps:get(FieldName, ObjFields),
-    B = case is_primitive(FieldType) of
-	    true -> 
-		io:format("encode_field(~p,~p)~n", [FieldType, Field]),
-		encode_field(FieldType, Field);
-	    false -> 
-		io:format("encode_obj(~p)~n", [Field]),
-		encode_obj(Field)
-	end,    
+    B = encode_obj(Field, FieldType), 
     NewAcc = <<B/binary,Acc/binary>>,
-    encode_obj(Obj, RestFields, NewAcc).
+    encode_obj(Obj, ua_struct, RestFields, NewAcc).
 
 make_open_secure_channel_request() ->
     RequestHeader = #{<<"type">> => <<"RequestHeader">>,
