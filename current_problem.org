@@ -1,0 +1,20 @@
+* GOALS [0/2]
+** TODO Encode an erlang map of an OpenSecureChannelRequest request automatically, and send it
+** TODO Receive an OpenSecureChannelResponse from the socket and decode it automatically
+** TODO Establish a Session
+** TODO Read a data value
+
+* 2020-05-26
+** Finished today
+    Today I encoded definitions for nodes in a file, and loaded them into an ETS table with ~file:consult/1~
+    This ETS table is wrapped in a ~gen_server~ so that it can be included in a supervision tree.
+** Working on
+    ~ua_binary.erl~ implementing all the datatypes.
+    Currently workind on the NodeID (and how to handle the flags).
+    Also, what is a Numeric if it doesn't fit in 2byte/4byte? Is it 8 byte?
+* 20201-05-28
+** Finished Today
+   fixed 2/4 byte node id encoding scheme. Added the ETS table for definitions to the App + Supervisior
+
+   > Also, what is a Numeric if it doesn't fit in 2byte/4byte? Is it 8 byte?
+   It's 4 byte in this case.

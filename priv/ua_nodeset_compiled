@@ -1,0 +1,54 @@
+
+%% structs
+{<<"OpenSecureChannelRequest">>, ua_struct,
+    [{<<"RequestHeader">>, <<"RequestHeader">>},
+     {<<"ClientProtocolVersion">>, <<"UInt32">>},
+     {<<"RequestType">>, <<"SecurityTokenRequestType">>},
+     {<<"SecurityMode">>, <<"MessageSecurityMode">>},
+     {<<"ClientNonce">>, <<"ByteString">>},
+     {<<"RequestedLifetime">>, <<"UInt32">>}]}.
+
+{<<"RequestHeader">>, 
+    ua_struct, 
+     [{<<"AuthenticationToken">>, <<"NodeId">>},
+      {<<"Timestamp">>,<<"DateTime">>},
+      {<<"RequestHandle">>,<<"UInt32">>},
+      {<<"ReturnDiagnostics">>,<<"UInt32">>},
+      {<<"AuditEntryId">>,<<"String">>},
+      {<<"TimeoutHint">>,<<"UInt32">>},
+      {<<"AdditionalHeader">>,<<"ExtensionObject">>}]}.
+
+%% enums
+{<<"SecurityTokenRequestType">>, ua_enum, [{<<"Issue">>, 0}, {<<"Renew">>, 1}]}.
+{<<"MessageSecurityMode">>, ua_enum,
+    [{<<"Invalid">>, 0},
+     {<<"None">>, 1},
+     {<<"Sign">>, 2},
+     {<<"SignAndEncrypt">>, 3}]}.
+
+%% primitives
+{<<"Boolean">>, ua_prim, []}.
+{<<"SByte">>, ua_prim, []}.
+{<<"Byte">>, ua_prim, []}.
+{<<"UInt16">>, ua_prim, []}.
+{<<"Int16">>, ua_prim, []}.
+{<<"UInt32">>, ua_prim, []}.
+{<<"Int32">>, ua_prim, []}.
+{<<"UInt64">>, ua_prim, []}.
+{<<"Int64">>, ua_prim, []}.
+{<<"Float">>, ua_prim, []}.
+{<<"Double">>, ua_prim, []}.
+{<<"String">>, ua_prim, []}.
+{<<"DateTime">>, ua_prim, []}.
+{<<"GUID">>, ua_prim, []}.
+{<<"ByteString">>, ua_prim, []}.
+{<<"XmlElement">>, ua_prim, []}.
+{<<"NodeId">>, ua_prim, []}.
+{<<"ExpandedNodeId">>, ua_prim, []}.
+{<<"StatusCode">>, ua_prim, []}.
+{<<"QualifiedName">>, ua_prim, []}.
+{<<"LocalizedText">>, ua_prim, []}.
+{<<"ExtensionObject">>, ua_prim, []}.
+{<<"DataValue">>, ua_prim, []}.
+{<<"Variant">>, ua_prim, []}.
+{<<"DiagnosticInfo">>, ua_prim, []}.
